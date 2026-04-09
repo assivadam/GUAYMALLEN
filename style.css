@@ -1,0 +1,365 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #1a0a00 0%, #3d1f0f 50%, #1a0a00 100%);
+    color: #fff;
+    overflow-x: hidden;
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 100%;
+}
+
+/* Header */
+.header {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 15px 20px;
+    backdrop-filter: blur(10px);
+    border-bottom: 2px solid #d4af37;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #d4af37;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Área del alfajor */
+.main-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    position: relative;
+}
+
+.alfajor-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.alfajor-click {
+    cursor: pointer;
+    transition: transform 0.1s ease;
+    position: relative;
+}
+
+.alfajor-click:hover {
+    transform: scale(1.05);
+}
+
+.alfajor-click:active {
+    transform: scale(0.95);
+}
+
+.alfajor-img {
+    width: 300px;
+    height: 300px;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 30px rgba(212, 175, 55, 0.3));
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.click-effect {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    font-weight: bold;
+    color: #ffd700;
+    pointer-events: none;
+    opacity: 0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.click-effect.active {
+    animation: popup 0.6s ease-out;
+}
+
+@keyframes popup {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -150%) scale(1.5);
+    }
+}
+
+/* Migajas */
+.migaja {
+    position: fixed;
+    width: 30px;
+    height: 30px;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 1;
+    animation: fall 1.5s ease-in forwards;
+}
+
+@keyframes fall {
+    0% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(300px) rotate(360deg);
+    }
+}
+
+/* Tienda */
+.shop {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border-top: 2px solid #d4af37;
+    max-height: 40vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.shop-tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 15px;
+    background: transparent;
+    border: none;
+    color: #d4af37;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover {
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.tab-btn.active {
+    color: #ffd700;
+    border-bottom-color: #ffd700;
+    background: rgba(212, 175, 55, 0.2);
+}
+
+.shop-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.shop-content.hidden {
+    display: none;
+}
+
+.shop-items {
+    padding: 10px;
+}
+
+.shop-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.shop-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(212, 175, 55, 0.6);
+    transform: translateX(5px);
+}
+
+.shop-item.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.shop-item.locked:hover {
+    transform: none;
+}
+
+.item-icon {
+    font-size: 3rem;
+    min-width: 60px;
+    text-align: center;
+}
+
+.item-info {
+    flex: 1;
+}
+
+.item-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #ffd700;
+    margin-bottom: 5px;
+}
+
+.item-description {
+    font-size: 0.85rem;
+    color: #d4af37;
+    margin-bottom: 5px;
+}
+
+.item-stats {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    color: #a0a0a0;
+}
+
+.item-price {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #ffd700;
+    min-width: 100px;
+    text-align: right;
+}
+
+.item-owned {
+    font-size: 0.9rem;
+    color: #a0a0a0;
+    text-align: right;
+    margin-top: 5px;
+}
+
+/* Scrollbar personalizado */
+.shop-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.shop-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.shop-content::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.5);
+    border-radius: 4px;
+}
+
+.shop-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.7);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .alfajor-img {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .shop {
+        max-height: 45vh;
+    }
+    
+    .tab-btn {
+        font-size: 0.9rem;
+        padding: 12px;
+    }
+    
+    .item-icon {
+        font-size: 2.5rem;
+        min-width: 50px;
+    }
+    
+    .item-name {
+        font-size: 1rem;
+    }
+    
+    .item-description,
+    .item-stats {
+        font-size: 0.8rem;
+    }
+    
+    .item-price {
+        font-size: 1rem;
+        min-width: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 10px 15px;
+    }
+    
+    .stat-value {
+        font-size: 1.2rem;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+    }
+    
+    .alfajor-img {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .shop-item {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .item-icon {
+        font-size: 2rem;
+        min-width: 40px;
+    }
+}
