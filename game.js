@@ -31,25 +31,51 @@ const ALFAJORES_DATA = {
 };
 
 const EDIFICIOS_DATA = {
-  kiosquero: { id: 'kiosquero', nombre: 'Kiosquero del barrio', precioBase: 15, aps: 0.1, emoji: '🏪', owned: 0 },
-  panaderia: { id: 'panaderia', nombre: 'Panadería de Flores', precioBase: 100, aps: 0.5, emoji: '🥖', owned: 0 },
-  maquina: { id: 'maquina', nombre: 'Máquina de dulce de leche', precioBase: 500, aps: 2.0, emoji: '🏭', owned: 0 },
-  linea: { id: 'linea', nombre: 'Línea de chocolate', precioBase: 2000, aps: 8.0, emoji: '🍫', owned: 0 },
-  camion: { id: 'camion', nombre: 'Camioncito de reparto', precioBase: 8000, aps: 25.0, emoji: '🚚', owned: 0 },
-  fabrica: { id: 'fabrica', nombre: 'Fábrica de Mataderos', precioBase: 30000, aps: 80.0, emoji: '🏭', owned: 0 }
+  kiosquero: { id: 'kiosquero', nombre: 'Kiosquero', desc: 'El pibe de la esquina vende tus alfajores', precioBase: 15, aps: 0.1, emoji: '🏪', owned: 0 },
+  panaderia: { id: 'panaderia', nombre: 'Panadería', desc: 'Pan y alfajores, combo ideal', precioBase: 100, aps: 0.5, emoji: '🥖', owned: 0 },
+  maquina: { id: 'maquina', nombre: 'Máquina DDL', desc: 'Dulce de leche non-stop', precioBase: 500, aps: 2.0, emoji: '⚙️', owned: 0 },
+  linea: { id: 'linea', nombre: 'Línea de chocolate', desc: 'El bañado perfecto', precioBase: 2000, aps: 8.0, emoji: '🍫', owned: 0 },
+  camion: { id: 'camion', nombre: 'Camioncito', desc: 'Reparte por todo el país', precioBase: 8000, aps: 25.0, emoji: '🚚', owned: 0 },
+  fabrica: { id: 'fabrica', nombre: 'Fábrica', desc: 'La fábrica de Mataderos', precioBase: 30000, aps: 80.0, emoji: '🏭', owned: 0 },
+  exportadora: { id: 'exportadora', nombre: 'Exportadora', desc: 'Alfajores al mundo', precioBase: 150000, aps: 300.0, emoji: '✈️', owned: 0 }
 };
 
+const MEJORAS_DATA = [
+  { id: 'doble_click', nombre: 'Doble mordisco', desc: 'El kiosquero duplica su eficiencia', costo: 100, tipo: 'edificio', target: 'kiosquero', multiplicador: 2, comprado: false, requiere: { edificio: 'kiosquero', cantidad: 1 } },
+  { id: 'mejor_ddl', nombre: 'Dulce de leche extra', desc: 'Las panaderías producen el doble', costo: 500, tipo: 'edificio', target: 'panaderia', multiplicador: 2, comprado: false, requiere: { edificio: 'panaderia', cantidad: 1 } },
+  { id: 'turbo_maquina', nombre: 'Turbo máquina', desc: 'Máquina DDL al máximo', costo: 5000, tipo: 'edificio', target: 'maquina', multiplicador: 2, comprado: false, requiere: { edificio: 'maquina', cantidad: 5 } },
+  { id: 'chocolate_premium', nombre: 'Chocolate premium', desc: 'Mejor cacao, más producción', costo: 10000, tipo: 'edificio', target: 'linea', multiplicador: 2, comprado: false, requiere: { edificio: 'linea', cantidad: 1 } },
+  { id: 'click_x2', nombre: 'Clic hambriento', desc: 'Cada clic vale el doble', costo: 200, tipo: 'click', multiplicador: 2, comprado: false, requiere: { totalAlfajores: 50 } },
+  { id: 'click_x4', nombre: 'Furia alfajorera', desc: 'Cada clic vale 4 veces más', costo: 5000, tipo: 'click', multiplicador: 4, comprado: false, requiere: { totalAlfajores: 2000 } },
+  { id: 'ddl_extra', nombre: 'Más DDL', desc: 'Camioncito turbo', costo: 80000, tipo: 'edificio', target: 'camion', multiplicador: 2, comprado: false, requiere: { edificio: 'camion', cantidad: 1 } },
+  { id: 'fabrica_pro', nombre: 'Fábrica pro', desc: 'La fábrica produce más', costo: 400000, tipo: 'edificio', target: 'fabrica', multiplicador: 2, comprado: false, requiere: { edificio: 'fabrica', cantidad: 1 } }
+];
+
 let gameState = {
-  alfajores: 0, totalAlfajores: 0, aps: 0,
+  alfajores: 0, totalAlfajores: 0, aps: 0, clickMultiplier: 1,
   currentAlfajor: 'negro', alfajorState: 'envuelto1',
   clicksOnWrapper: 0, clicksOnAlfajor: 0,
   alfajoresUnlocked: { negro: true, blanco: false, caviar: false },
-  edificios: {}, lastUpdate: Date.now()
+  edificios: {}, mejoras: {}, lastUpdate: Date.now()
 };
 
+let buyAmount = 1;
+let shopNeedsUpdate = false;
+
 window.addEventListener('load', () => {
-  loadGame(); renderShop(); updateUI(); startGameLoop(); setupEventListeners();
+  loadGame(); renderShop(); updateUI(); startGameLoop(); setupEventListeners(); setupBuyButtons();
 });
+
+function setupBuyButtons() {
+  document.querySelectorAll('.buy-amount-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      buyAmount = parseInt(btn.dataset.amount);
+      document.querySelectorAll('.buy-amount-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderEdificiosShop();
+    });
+  });
+}
 
 function setupEventListeners() {
   const clickEl = document.getElementById('alfajorClick');
@@ -68,29 +94,24 @@ function handleAlfajorClick(e) {
   const currentAlf = ALFAJORES_DATA[gameState.currentAlfajor];
   const clickX = e.clientX;
   const clickY = e.clientY;
-
   if (gameState.alfajorState === 'envuelto1') {
-    gameState.alfajorState = 'envuelto2';
-    updateAlfajorImage(); return;
+    gameState.alfajorState = 'envuelto2'; updateAlfajorImage(); return;
   }
   if (gameState.alfajorState === 'envuelto2') {
-    gameState.alfajorState = 'completo';
-    gameState.clicksOnAlfajor = 0;
-    updateAlfajorImage(); return;
+    gameState.alfajorState = 'completo'; gameState.clicksOnAlfajor = 0; updateAlfajorImage(); return;
   }
   if (gameState.alfajorState === 'completo' || gameState.alfajorState.startsWith('mordisco')) {
-    gameState.alfajores += currentAlf.clickValue;
-    gameState.totalAlfajores += currentAlf.clickValue;
-    showClickEffect(currentAlf.clickValue, clickX, clickY);
-    spawnMigajas(clickX, clickY);
+    const earned = currentAlf.clickValue * gameState.clickMultiplier;
+    gameState.alfajores += earned; gameState.totalAlfajores += earned;
+    showClickEffect(earned, clickX, clickY); spawnMigajas(clickX, clickY);
     gameState.clicksOnAlfajor++;
     if (gameState.clicksOnAlfajor >= 5) {
-      gameState.alfajorState = 'envuelto1';
-      gameState.clicksOnAlfajor = 0;
+      gameState.alfajorState = 'envuelto1'; gameState.clicksOnAlfajor = 0;
     } else {
       gameState.alfajorState = 'mordisco' + gameState.clicksOnAlfajor;
     }
     updateAlfajorImage(); updateUI(); saveGame();
+    shopNeedsUpdate = true; checkMejoras();
   }
 }
 
@@ -103,32 +124,26 @@ function updateAlfajorImage() {
 function showClickEffect(value, x, y) {
   const effect = document.getElementById('clickEffect');
   effect.textContent = '+' + formatNumber(value);
-  effect.style.left = (x - 20) + 'px';
-  effect.style.top = (y - 30) + 'px';
+  effect.style.left = (x - 20) + 'px'; effect.style.top = (y - 30) + 'px';
   effect.style.position = 'fixed';
-  effect.classList.remove('active');
-  void effect.offsetWidth;
-  effect.classList.add('active');
+  effect.classList.remove('active'); void effect.offsetWidth; effect.classList.add('active');
 }
 
 function spawnMigajas(clickX, clickY) {
   const count = Math.floor(Math.random() * 4) + 3;
   for (let i = 0; i < count; i++) {
     const migaja = document.createElement('img');
-    migaja.src = 'images/a_negro_migajas.png';
-    migaja.className = 'migaja';
-    const spreadX = (Math.random() - 0.5) * 30;
-    const spreadY = (Math.random() - 0.5) * 20;
+    migaja.src = 'images/a_negro_migajas.png'; migaja.className = 'migaja';
+    const spreadX = (Math.random() - 0.5) * 30; const spreadY = (Math.random() - 0.5) * 20;
     const velX = (Math.random() - 0.5) * 140;
-    migaja.style.left = (clickX + spreadX) + 'px';
-    migaja.style.top = (clickY + spreadY) + 'px';
+    migaja.style.left = (clickX + spreadX) + 'px'; migaja.style.top = (clickY + spreadY) + 'px';
     migaja.style.setProperty('--velX', velX + 'px');
     document.getElementById('migajasContainer').appendChild(migaja);
     setTimeout(() => migaja.remove(), 1200);
   }
 }
 
-function renderShop() { renderAlfajoresShop(); renderEdificiosShop(); }
+function renderShop() { renderAlfajoresShop(); renderEdificiosShop(); renderMejorasShop(); }
 
 function renderAlfajoresShop() {
   const container = document.getElementById('alfajoresShop');
@@ -138,10 +153,20 @@ function renderAlfajoresShop() {
     item.className = 'shop-item';
     const unlocked = gameState.alfajoresUnlocked[alf.id];
     const canBuy = gameState.alfajores >= alf.costo;
+    const isEquipped = alf.id === gameState.currentAlfajor && unlocked;
     if (!unlocked && !canBuy) item.classList.add('locked');
-    item.innerHTML = '<div class="item-icon">' + alf.emoji + '</div><div class="item-info"><div class="item-name">' + alf.nombre + '</div><div class="item-description">' + (alf.catchphrase || 'Alfajor clásico argentino') + '</div><div class="item-stats"><span>👆 +' + alf.clickValue + ' por clic</span><span>⏱️ +' + alf.aps + ' APS</span></div></div><div><div class="item-price">' + (unlocked ? 'EQUIPADO' : (alf.costo === 0 ? 'GRATIS' : formatNumber(alf.costo))) + '</div>' + (!unlocked && alf.costo > 0 ? '<div class="item-owned">🔒 Bloqueado</div>' : '') + '</div>';
+    if (isEquipped) item.classList.add('equipped');
+    item.innerHTML = `<div class="item-icon">${alf.emoji}</div>
+      <div class="item-info">
+        <div class="item-name">${alf.nombre}</div>
+        <div class="item-description">${alf.catchphrase || 'Alfajor clásico argentino'}</div>
+        <div class="item-stats"><span>👆 +${alf.clickValue} por clic</span><span>⏱️ +${alf.aps} APS</span></div>
+      </div>
+      <div class="item-right">
+        <div class="item-price ${canBuy || unlocked ? '' : 'price-locked'}">${unlocked ? (isEquipped ? '✅ EQUIPADO' : '🔄 EQUIPAR') : (alf.costo === 0 ? 'GRATIS' : '🍫 ' + formatNumber(alf.costo))}</div>
+      </div>`;
     if (!unlocked && canBuy) item.addEventListener('click', () => buyAlfajor(alf.id));
-    else if (unlocked && alf.id !== gameState.currentAlfajor) item.addEventListener('click', () => equipAlfajor(alf.id));
+    else if (unlocked && !isEquipped) item.addEventListener('click', () => equipAlfajor(alf.id));
     container.appendChild(item);
   });
 }
@@ -149,17 +174,96 @@ function renderAlfajoresShop() {
 function renderEdificiosShop() {
   const container = document.getElementById('edificiosShop');
   container.innerHTML = '';
-  Object.values(EDIFICIOS_DATA).forEach(edif => {
+  const sorted = Object.values(EDIFICIOS_DATA).sort((a, b) => {
+    const ownedA = gameState.edificios[a.id] || 0, ownedB = gameState.edificios[b.id] || 0;
+    const pA = calculateEdificioPrecioN(a.precioBase, ownedA, buyAmount);
+    const pB = calculateEdificioPrecioN(b.precioBase, ownedB, buyAmount);
+    const cA = gameState.alfajores >= pA, cB = gameState.alfajores >= pB;
+    if (cA && !cB) return -1; if (!cA && cB) return 1; return pA - pB;
+  });
+  sorted.forEach(edif => {
     const owned = gameState.edificios[edif.id] || 0;
-    const precio = calculateEdificioPrecio(edif.precioBase, owned);
+    const precio = calculateEdificioPrecioN(edif.precioBase, owned, buyAmount);
     const canBuy = gameState.alfajores >= precio;
     const item = document.createElement('div');
-    item.className = 'shop-item';
-    if (!canBuy) item.classList.add('locked');
-    item.innerHTML = '<div class="item-icon">' + edif.emoji + '</div><div class="item-info"><div class="item-name">' + edif.nombre + '</div><div class="item-description">Produce alfajores automáticamente</div><div class="item-stats"><span>⏱️ ' + edif.aps + ' APS por unidad</span></div></div><div><div class="item-price">' + formatNumber(precio) + '</div><div class="item-owned">Tenés: ' + owned + '</div></div>';
+    item.className = 'shop-item edificio-item' + (canBuy ? '' : ' locked');
+    const edifAps = edif.aps * getEdificioMultiplier(edif.id);
+    const totalContrib = edifAps * owned;
+    item.innerHTML = `<div class="item-icon">${edif.emoji}</div>
+      <div class="item-info">
+        <div class="item-name">${edif.nombre} ${owned > 0 ? '<span class="owned-badge">x' + owned + '</span>' : ''}</div>
+        <div class="item-description">${edif.desc}</div>
+        <div class="item-stats"><span>⏱️ ${edifAps} APS/u</span>${owned > 0 ? '<span>📊 ' + formatNumber(totalContrib, 1) + ' APS total</span>' : ''}</div>
+      </div>
+      <div class="item-right">
+        <div class="item-price ${canBuy ? '' : 'price-locked'}">🍫 ${formatNumber(precio)}</div>
+        <div class="buy-label">Comprar x${buyAmount}</div>
+      </div>`;
     if (canBuy) item.addEventListener('click', () => buyEdificio(edif.id));
     container.appendChild(item);
   });
+}
+
+function renderMejorasShop() {
+  const container = document.getElementById('mejorasShop');
+  if (!container) return;
+  container.innerHTML = '';
+  const disponibles = MEJORAS_DATA.filter(m => !gameState.mejoras[m.id] && isMejoraVisible(m));
+  const compradas = MEJORAS_DATA.filter(m => gameState.mejoras[m.id]);
+  if (disponibles.length === 0 && compradas.length === 0) {
+    container.innerHTML = '<div class="no-mejoras">🔒 Comprá productores para desbloquear mejoras</div>'; return;
+  }
+  disponibles.forEach(m => {
+    const canBuy = gameState.alfajores >= m.costo;
+    const item = document.createElement('div');
+    item.className = 'mejora-item' + (canBuy ? ' can-buy' : '');
+    item.innerHTML = `<div class="mejora-icon">⬆️</div>
+      <div class="mejora-info"><div class="mejora-name">${m.nombre}</div><div class="mejora-desc">${m.desc}</div></div>
+      <div class="mejora-price ${canBuy ? '' : 'price-locked'}">🍫 ${formatNumber(m.costo)}</div>`;
+    if (canBuy) item.addEventListener('click', () => buyMejora(m.id));
+    container.appendChild(item);
+  });
+  if (compradas.length > 0) {
+    const sep = document.createElement('div'); sep.className = 'mejoras-sep'; sep.textContent = '✅ Mejoras compradas';
+    container.appendChild(sep);
+    compradas.forEach(m => {
+      const item = document.createElement('div'); item.className = 'mejora-item comprada';
+      item.innerHTML = `<div class="mejora-icon">✅</div><div class="mejora-info"><div class="mejora-name">${m.nombre}</div><div class="mejora-desc">${m.desc}</div></div>`;
+      container.appendChild(item);
+    });
+  }
+}
+
+function isMejoraVisible(m) {
+  if (m.requiere) {
+    if (m.requiere.edificio && (gameState.edificios[m.requiere.edificio] || 0) < m.requiere.cantidad) return false;
+    if (m.requiere.totalAlfajores && gameState.totalAlfajores < m.requiere.totalAlfajores) return false;
+  }
+  return true;
+}
+
+function buyMejora(id) {
+  const mejora = MEJORAS_DATA.find(m => m.id === id);
+  if (!mejora || gameState.mejoras[id] || gameState.alfajores < mejora.costo) return;
+  gameState.alfajores -= mejora.costo;
+  gameState.mejoras[id] = true;
+  if (mejora.tipo === 'click') gameState.clickMultiplier *= mejora.multiplicador;
+  calculateAPS(); renderShop(); updateUI(); saveGame();
+  showNotificacion('✅ ' + mejora.nombre + ' comprada!', mejora.desc);
+}
+
+function getEdificioMultiplier(id) {
+  let mult = 1;
+  MEJORAS_DATA.forEach(m => {
+    if (gameState.mejoras[m.id] && m.tipo === 'edificio' && m.target === id) mult *= m.multiplicador;
+  });
+  return mult;
+}
+
+function calculateEdificioPrecioN(precioBase, owned, n) {
+  if (n === 1) return Math.floor(precioBase * Math.pow(1.15, owned));
+  const r = 1.15;
+  return Math.floor(precioBase * Math.pow(r, owned) * (Math.pow(r, n) - 1) / (r - 1));
 }
 
 function buyAlfajor(id) {
@@ -168,56 +272,73 @@ function buyAlfajor(id) {
     gameState.alfajores -= alf.costo;
     gameState.alfajoresUnlocked[id] = true;
     equipAlfajor(id); renderShop(); updateUI(); saveGame();
+    showNotificacion('🍫 ' + alf.nombre + ' desbloqueado!', alf.catchphrase || 'Nuevo alfajor disponible');
   }
 }
 
 function equipAlfajor(id) {
-  gameState.currentAlfajor = id;
-  gameState.alfajorState = 'envuelto1';
-  gameState.clicksOnAlfajor = 0;
+  gameState.currentAlfajor = id; gameState.alfajorState = 'envuelto1'; gameState.clicksOnAlfajor = 0;
   updateAlfajorImage(); calculateAPS(); renderShop(); updateUI(); saveGame();
 }
 
 function buyEdificio(id) {
   const edif = EDIFICIOS_DATA[id];
   const owned = gameState.edificios[id] || 0;
-  const precio = calculateEdificioPrecio(edif.precioBase, owned);
+  const precio = calculateEdificioPrecioN(edif.precioBase, owned, buyAmount);
   if (gameState.alfajores >= precio) {
-    gameState.alfajores -= precio;
-    gameState.edificios[id] = owned + 1;
-    calculateAPS(); renderShop(); updateUI(); saveGame();
+    gameState.alfajores -= precio; gameState.edificios[id] = owned + buyAmount;
+    calculateAPS(); renderShop(); updateUI(); saveGame(); shopNeedsUpdate = false;
   }
-}
-
-function calculateEdificioPrecio(precioBase, owned) {
-  return Math.floor(precioBase * Math.pow(1.15, owned));
 }
 
 function calculateAPS() {
   let totalAps = 0;
-  if (gameState.alfajoresUnlocked[gameState.currentAlfajor]) {
-    totalAps += ALFAJORES_DATA[gameState.currentAlfajor].aps;
-  }
+  if (gameState.alfajoresUnlocked[gameState.currentAlfajor]) totalAps += ALFAJORES_DATA[gameState.currentAlfajor].aps;
   Object.entries(gameState.edificios).forEach(([id, count]) => {
-    totalAps += EDIFICIOS_DATA[id].aps * count;
+    if (count > 0 && EDIFICIOS_DATA[id]) totalAps += EDIFICIOS_DATA[id].aps * count * getEdificioMultiplier(id);
   });
   gameState.aps = totalAps;
+}
+
+function checkMejoras() {
+  const nuevas = MEJORAS_DATA.filter(m => !gameState.mejoras[m.id] && isMejoraVisible(m) && gameState.alfajores >= m.costo);
+  const badge = document.getElementById('mejorasBadge');
+  if (badge) { badge.textContent = nuevas.length; badge.style.display = nuevas.length > 0 ? 'inline-block' : 'none'; }
+}
+
+function showNotificacion(titulo, desc) {
+  const container = document.getElementById('notificacionesContainer');
+  if (!container) return;
+  const notif = document.createElement('div'); notif.className = 'notificacion';
+  notif.innerHTML = `<div class="notif-title">${titulo}</div><div class="notif-desc">${desc}</div>`;
+  container.appendChild(notif);
+  setTimeout(() => notif.classList.add('notif-show'), 10);
+  setTimeout(() => { notif.classList.remove('notif-show'); setTimeout(() => notif.remove(), 400); }, 3500);
 }
 
 function switchTab(tabName) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
   document.getElementById('tab-alfajores').classList.toggle('hidden', tabName !== 'alfajores');
   document.getElementById('tab-edificios').classList.toggle('hidden', tabName !== 'edificios');
+  document.getElementById('tab-mejoras').classList.toggle('hidden', tabName !== 'mejoras');
+  const buyBar = document.getElementById('buyBar');
+  if (buyBar) buyBar.classList.toggle('hidden', tabName !== 'edificios');
+  if (tabName === 'mejoras') {
+    const badge = document.getElementById('mejorasBadge'); if (badge) badge.style.display = 'none';
+    renderMejorasShop();
+  }
 }
 
 function startGameLoop() {
   setInterval(() => {
-    const now = Date.now();
-    const deltaTime = (now - gameState.lastUpdate) / 1000;
+    const now = Date.now(); const deltaTime = (now - gameState.lastUpdate) / 1000;
     gameState.lastUpdate = now;
     const earned = gameState.aps * deltaTime;
-    if (earned > 0) { gameState.alfajores += earned; gameState.totalAlfajores += earned; updateUI(); }
+    if (earned > 0) { gameState.alfajores += earned; gameState.totalAlfajores += earned; updateUI(); shopNeedsUpdate = true; }
   }, 100);
+  setInterval(() => {
+    if (shopNeedsUpdate) { shopNeedsUpdate = false; renderEdificiosShop(); renderAlfajoresShop(); checkMejoras(); }
+  }, 500);
   setInterval(() => saveGame(), 10000);
 }
 
@@ -227,6 +348,7 @@ function updateUI() {
 }
 
 function formatNumber(num, decimals = 0) {
+  if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
   if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
   return num.toFixed(decimals);
@@ -235,8 +357,9 @@ function formatNumber(num, decimals = 0) {
 function saveGame() {
   localStorage.setItem('guaymallenClicker', JSON.stringify({
     alfajores: gameState.alfajores, totalAlfajores: gameState.totalAlfajores,
-    currentAlfajor: gameState.currentAlfajor, alfajoresUnlocked: gameState.alfajoresUnlocked,
-    edificios: gameState.edificios, lastSave: Date.now()
+    clickMultiplier: gameState.clickMultiplier, currentAlfajor: gameState.currentAlfajor,
+    alfajoresUnlocked: gameState.alfajoresUnlocked, edificios: gameState.edificios,
+    mejoras: gameState.mejoras, lastSave: Date.now()
   }));
 }
 
@@ -245,30 +368,31 @@ function loadGame() {
   if (saved) {
     try {
       const data = JSON.parse(saved);
-      gameState.alfajores = data.alfajores || 0;
-      gameState.totalAlfajores = data.totalAlfajores || 0;
+      gameState.alfajores = data.alfajores || 0; gameState.totalAlfajores = data.totalAlfajores || 0;
+      gameState.clickMultiplier = data.clickMultiplier || 1;
       gameState.currentAlfajor = data.currentAlfajor || 'negro';
       gameState.alfajoresUnlocked = data.alfajoresUnlocked || { negro: true, blanco: false, caviar: false };
-      gameState.edificios = data.edificios || {};
+      gameState.edificios = data.edificios || {}; gameState.mejoras = data.mejoras || {};
       if (data.lastSave) {
         const offlineTime = (Date.now() - data.lastSave) / 1000;
         calculateAPS();
         const offlineEarnings = gameState.aps * offlineTime;
-        if (offlineEarnings > 0) {
-          gameState.alfajores += offlineEarnings;
-          gameState.totalAlfajores += offlineEarnings;
-          console.log('¡Ganaste ' + formatNumber(offlineEarnings) + ' alfajores mientras estabas ausente!');
+        if (offlineEarnings > 1) {
+          gameState.alfajores += offlineEarnings; gameState.totalAlfajores += offlineEarnings;
+          setTimeout(() => showNotificacion('🕐 Producción offline', 'Ganaste ' + formatNumber(offlineEarnings) + ' alfajores mientras estabas ausente!'), 500);
         }
       }
     } catch(e) { console.error('Error al cargar el juego:', e); }
+  }
+  if (Object.keys(gameState.mejoras).length > 0) {
+    gameState.clickMultiplier = 1;
+    MEJORAS_DATA.forEach(m => { if (gameState.mejoras[m.id] && m.tipo === 'click') gameState.clickMultiplier *= m.multiplicador; });
   }
   calculateAPS(); updateAlfajorImage();
 }
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then(() => console.log('Service Worker registrado'))
-      .catch(err => console.log('Error al registrar SW:', err));
+    navigator.serviceWorker.register('sw.js').then(() => console.log('SW OK')).catch(err => console.log('SW error:', err));
   });
 }
