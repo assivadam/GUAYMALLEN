@@ -91,7 +91,7 @@ body {
     width: 300px;
     height: 300px;
     object-fit: contain;
-    filter: drop-shadow(0 10px 30px rgba(212, 175, 55, 0.5));
+    filter: brightness(1.6) saturate(1.2) drop-shadow(0 8px 25px rgba(212, 175, 55, 0.6));
     animation: float 3s ease-in-out infinite;
     mix-blend-mode: screen;
 }
@@ -102,7 +102,7 @@ body {
 }
 
 .click-effect {
-    position: absolute;
+    position: fixed;
     font-size: 1.5rem;
     font-weight: bold;
     color: #ffd700;
@@ -270,7 +270,6 @@ body {
     margin-top: 4px;
 }
 
-/* Migajas container */
 #migajasContainer {
     position: fixed;
     top: 0;
@@ -282,25 +281,11 @@ body {
     overflow: hidden;
 }
 
-/* Scrollbar */
-.shop-content::-webkit-scrollbar {
-    width: 6px;
-}
+.shop-content::-webkit-scrollbar { width: 6px; }
+.shop-content::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+.shop-content::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.5); border-radius: 4px; }
+.shop-content::-webkit-scrollbar-thumb:hover { background: rgba(212, 175, 55, 0.7); }
 
-.shop-content::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
-}
-
-.shop-content::-webkit-scrollbar-thumb {
-    background: rgba(212, 175, 55, 0.5);
-    border-radius: 4px;
-}
-
-.shop-content::-webkit-scrollbar-thumb:hover {
-    background: rgba(212, 175, 55, 0.7);
-}
-
-/* Responsive */
 @media (max-width: 768px) {
     .stat-value { font-size: 1.5rem; }
     .alfajor-img { width: 250px; height: 250px; }
