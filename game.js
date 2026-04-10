@@ -2,10 +2,11 @@
 const ALFAJORES_DATA = {
   negro: {
     id: 'negro', nombre: 'Guaymallen Negro', costo: 0, clickValue: 1, aps: 0.1, emoji: '🍫',
+    catchphrase: 'Relleno de dulce de leche y baño de chocolate',
     mordiscos: 5,
     images: {
-      envuelto1: 'images/negro/A_negro_envuelto1.png',
-      envuelto2: 'images/negro/A_negro_envuelto2.png',
+      envuelto1: 'images/negro/A_negro_envuelto2.png',
+      envuelto2: 'images/negro/A_negro_envuelto1.png',
       completo:  'images/negro/A_negro_completo.png',
       mordisco1: 'images/negro/A_negro_mordisco1.png',
       mordisco2: 'images/negro/A_negro_mordisco2.png',
@@ -17,6 +18,7 @@ const ALFAJORES_DATA = {
   },
   blanco: {
     id: 'blanco', nombre: 'Guaymallen Blanco', costo: 500, clickValue: 2, aps: 0.5, emoji: 'O',
+    catchphrase: 'Relleno de dulce de leche y baño de repostería blanco',
     mordiscos: 4,
     images: {
       envuelto1: 'images/blanco/envuelto1.png',
@@ -30,9 +32,9 @@ const ALFAJORES_DATA = {
     unlocked: false
   },
   caviar: {
-    id: 'caviar', nombre: 'Guaymallen Fruta', costo: 3000, clickValue: 5, aps: 1.5, emoji: '🍊',
+    id: 'caviar', nombre: 'Guaymallen de Membrillo', costo: 3000, clickValue: 5, aps: 1.5, emoji: '🍊',
     mordiscos: 4,
-    catchphrase: 'CAVIAAAAAR',
+    catchphrase: '¡¡¡¡CAVIAAAAAAR!!!!',
     images: {
       envuelto1: 'images/caviar/envuelto1.png',
       envuelto2: 'images/caviar/envuelto2.png',
@@ -47,10 +49,10 @@ const ALFAJORES_DATA = {
 };
 
 const EDIFICIOS_DATA = {
-  kiosquero:  { id: 'kiosquero',  nombre: 'Kiosquero',           desc: 'El pibe de la esquina vende tus alfajores', precioBase: 15,     aps: 0.1,   emoji: '🏪' },
-  panaderia:  { id: 'panaderia',  nombre: 'Panaderia',           desc: 'Pan y alfajores, combo ideal',              precioBase: 100,    aps: 0.5,   emoji: '🥖' },
-  maquina:    { id: 'maquina',    nombre: 'Maquina DDL',         desc: 'Dulce de leche non-stop',                   precioBase: 500,    aps: 2.0,   emoji: 'O' },
-  linea:      { id: 'linea',      nombre: 'Linea de chocolate',  desc: 'El banado perfecto',                        precioBase: 2000,   aps: 8.0,   emoji: '🍫' },
+  kiosquero:  { id: 'kiosquero',  nombre: 'Cafetería',            desc: 'Un alfajor y un café, la mejor merienda/desayuno', precioBase: 15,     aps: 0.1,   emoji: '🏪' },
+  panaderia:  { id: 'panaderia',  nombre: 'Panaderia',           desc: 'Pan y alfajores, combo ideal',                     precioBase: 100,    aps: 0.5,   emoji: '🥖' },
+  maquina:    { id: 'maquina',    nombre: 'Maquina DDL',         desc: '¡Dulce de leche sin parar!',                       precioBase: 500,    aps: 2.0,   emoji: 'O' },
+  linea:      { id: 'linea',      nombre: 'Linea de chocolate',  desc: 'El bañado perfecto',                               precioBase: 2000,   aps: 8.0,   emoji: '🍫' },
   camion:     { id: 'camion',     nombre: 'Camioncito',          desc: 'Reparte por todo el pais',                  precioBase: 8000,   aps: 25.0,  emoji: '🚚' },
   fabrica:    { id: 'fabrica',    nombre: 'Fabrica',             desc: 'La fabrica de Mataderos',                   precioBase: 30000,  aps: 80.0,  emoji: '🏭' },
   exportadora:{ id: 'exportadora',nombre: 'Exportadora',         desc: 'Alfajores al mundo',                        precioBase: 150000, aps: 300.0, emoji: 'A' },
@@ -108,6 +110,79 @@ let goldenTimeout = null;
 let goldenActive = false;
 const imageCache = {};
 
+// ==================== AUDIO ====================
+let bgMusic = null;
+let caviarSound = null;
+let isMuted = false;
+let caviarClickCount = 0;
+const CAVIAR_CLICK_INTERVAL = 30;
+let caviarIsPlaying = false;
+
+function initAudio() {
+  bgMusic = new Audio('Inklock Tango.mp3');
+  bgMusic.loop = true;
+  bgMusic.volume = 0.5;
+
+  caviarSound = new Audio('CAVIAR_CAVIARPREMIUM.m4a');
+  caviarSound.volume = 1.0;
+
+  // Cuando termina el caviar, restauramos el volumen de la música
+  caviarSound.addEventListener('ended', () => {
+    caviarIsPlaying = false;
+    if (bgMusic && !isMuted) {
+      fadeMusicVolume(bgMusic, 0.15, 0.5, 800);
+    }
+  });
+}
+
+function fadeMusicVolume(audio, from, to, duration) {
+  const steps = 20;
+  const interval = duration / steps;
+  const delta = (to - from) / steps;
+  let current = from;
+  audio.volume = from;
+  const timer = setInterval(() => {
+    current += delta;
+    if ((delta > 0 && current >= to) || (delta < 0 && current <= to)) {
+      audio.volume = to;
+      clearInterval(timer);
+    } else {
+      audio.volume = Math.max(0, Math.min(1, current));
+    }
+  }, interval);
+}
+
+function startBgMusic() {
+  if (!bgMusic) return;
+  bgMusic.play().catch(() => {
+    // Autoplay bloqueado: esperamos primer interaction
+    document.addEventListener('pointerdown', function resumeMusic() {
+      if (!isMuted) bgMusic.play().catch(() => {});
+      document.removeEventListener('pointerdown', resumeMusic);
+    }, { once: true });
+  });
+}
+
+function playCaviarSound() {
+  if (!caviarSound || isMuted) return;
+  // Solo suena cada CAVIAR_CLICK_INTERVAL clicks y si no está ya sonando
+  caviarClickCount++;
+  if (caviarClickCount < CAVIAR_CLICK_INTERVAL || caviarIsPlaying) return;
+  caviarClickCount = 0;
+  caviarIsPlaying = true;
+  // Baja el volumen de la música suavemente
+  if (bgMusic) fadeMusicVolume(bgMusic, bgMusic.volume, 0.08, 500);
+  caviarSound.play().catch(() => { caviarIsPlaying = false; });
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  if (bgMusic) bgMusic.muted = isMuted;
+  if (caviarSound) caviarSound.muted = isMuted;
+  const btn = document.getElementById('muteBtn');
+  if (btn) btn.textContent = isMuted ? '🔇' : '🔊';
+}
+
 function preloadImages() {
   const allImages = [];
   Object.values(ALFAJORES_DATA).forEach(alf => {
@@ -123,6 +198,7 @@ function preloadImages() {
 
 window.addEventListener('load', () => {
   preloadImages();
+  initAudio();
   loadGame();
   renderShop();
   updateUI();
@@ -130,6 +206,18 @@ window.addEventListener('load', () => {
   setupEventListeners();
   setupBuyButtons();
   scheduleGoldenAlfajor();
+
+  // Pantalla de inicio
+  const splashBtn = document.getElementById('splashBtn');
+  const splashScreen = document.getElementById('splashScreen');
+  if (splashBtn && splashScreen) {
+    splashBtn.addEventListener('click', () => {
+      splashScreen.classList.add('hidden');
+      startBgMusic();
+    });
+  } else {
+    startBgMusic();
+  }
 });
 
 function setupBuyButtons() {
@@ -162,6 +250,11 @@ function handleAlfajorClick(e) {
   const maxMordiscos = currentAlf.mordiscos || 5;
   const clickX = e.clientX;
   const clickY = e.clientY;
+
+  // Sonido caviar al cliquear el alfajor de fruta
+  if (gameState.currentAlfajor === 'caviar') {
+    playCaviarSound();
+  }
 
   // Envuelto1: da puntos Y avanza estado (visual: como si quitaras un lado del wrapper)
   if (gameState.alfajorState === 'envuelto1') {
@@ -573,6 +666,11 @@ function startGameLoop() {
       renderEdificiosShop();
       renderAlfajoresShop();
       checkMejoras();
+      // Actualizar mejoras en tiempo real si el tab está activo
+      const tabMejoras = document.getElementById('tab-mejoras');
+      if (tabMejoras && !tabMejoras.classList.contains('hidden')) {
+        renderMejorasShop();
+      }
     }
   }, 500);
   setInterval(() => saveGame(), 10000);

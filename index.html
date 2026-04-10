@@ -12,6 +12,16 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- PANTALLA DE INICIO -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-title">CAAAAAVIAAAAAR!!!!</div>
+            <div class="splash-subtitle">Guaymallen Clicker</div>
+            <div class="splash-alfajor">🍊</div>
+            <button class="splash-btn" id="splashBtn">¡A COMER!</button>
+        </div>
+    </div>
+
     <div class="container">
         <header class="header">
             <div class="stats">
@@ -24,6 +34,7 @@
                     <span class="stat-label">por segundo</span>
                 </div>
             </div>
+            <button id="muteBtn" class="mute-btn" onclick="toggleMute()">🔊</button>
         </header>
         <main class="main-area">
             <div class="alfajor-container">
