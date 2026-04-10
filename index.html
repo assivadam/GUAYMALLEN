@@ -5,18 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#8B4513">
     <meta name="description" content="¡Hacé click en el alfajor Guaymallén! Juego idle clicker adictivo.">
-    
     <title>Come Alfajor - Guaymallén Clicker</title>
-    
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="images/negro/A_negro_completo.png">
     <link rel="apple-touch-icon" href="images/negro/A_negro_completo.png">
-    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <!-- Header con contador -->
         <header class="header">
             <div class="stats">
                 <div class="stat-item">
@@ -29,8 +25,6 @@
                 </div>
             </div>
         </header>
-
-        <!-- Área principal con alfajor -->
         <main class="main-area">
             <div class="alfajor-container">
                 <div id="alfajorClick" class="alfajor-click">
@@ -39,29 +33,34 @@
                 <div id="clickEffect" class="click-effect">+1</div>
             </div>
         </main>
-
-        <!-- Tienda -->
         <aside class="shop">
             <div class="shop-tabs">
                 <button class="tab-btn active" data-tab="alfajores">🍫 Alfajores</button>
                 <button class="tab-btn" data-tab="edificios">🏭 Productores</button>
+                <button class="tab-btn" data-tab="mejoras">
+                    ⬆️ Mejoras
+                    <span id="mejorasBadge" class="tab-badge">0</span>
+                </button>
             </div>
-
-            <!-- Tab Alfajores -->
+            <div class="buy-bar hidden" id="buyBar">
+                <span class="buy-bar-label">Comprar:</span>
+                <button class="buy-amount-btn active" data-amount="1">x1</button>
+                <button class="buy-amount-btn" data-amount="10">x10</button>
+                <button class="buy-amount-btn" data-amount="100">x100</button>
+            </div>
             <div class="shop-content" id="tab-alfajores">
                 <div class="shop-items" id="alfajoresShop"></div>
             </div>
-
-            <!-- Tab Edificios -->
             <div class="shop-content hidden" id="tab-edificios">
                 <div class="shop-items" id="edificiosShop"></div>
             </div>
+            <div class="shop-content hidden" id="tab-mejoras">
+                <div class="shop-items" id="mejorasShop"></div>
+            </div>
         </aside>
     </div>
-
-    <!-- Contenedor de migajas -->
     <div id="migajasContainer"></div>
-
+    <div id="notificacionesContainer"></div>
     <script src="game.js"></script>
 </body>
 </html>
