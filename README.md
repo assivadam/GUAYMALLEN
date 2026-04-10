@@ -50,9 +50,8 @@ Juego idle clicker de alfajores Guaymallén 100% argentino.
 
 ## 📝 Créditos
 
-Juego creado para mostrarle a Hugo Basilotta (VP Guaymallén) la idea de publicidad en Twitter/X.
 
-Fotos reales de alfajores Guaymallén procesadas con removebg.
+Fotos reales de alfajores Guaymallén.
 
 ---
 
